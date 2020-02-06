@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta charset="utf-8">
+	<title>Silent Countdown Timer</title>
+
+	<!-- 
+		This code is licensed under CC0 “No Rights Reserved”. It was written by Johan Mattsson.
+		The picture was taken by Andy Bear Grills Barker: https://www.pexels.com/@andy-bear-grills-barker-565823 (the picture is also free to use).
+	-->
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<link rel="icon" type="image/png" href="images/timerfavicon2.png" id="favicon">
+
+	<script>
+		let counter = 10;
+		let state = "stopped";
+		
+		window.onload = function() {
+			let time = localStorage.getItem('totalTime');
+			
+			if (time != null) {
+				document.getElementById("totalTime").value = time;
+			}
+			
+			updateTotalCounter();
+		}
+		
+		document.addEventListener('DOMContentLoaded', function() {
+			if (!Notification) {
+				return;
+			}
+
+			if (Notification.permission !== 'granted') {
+				Notification.requestPermission();
+			}
+		});
+		
+		function updateTotalCounter() {
+			let time = document.getElementById("totalTime").value;
+			counter = parseInt(time * 60);
+			localStorage.setItem('totalTime', time);
+			updateCounter();
+		}
+		
+		function showTimeoutNotification() {
+			let message = document.getElementById("message").value;
+
+			if (Notification.permission !== 'granted') {
+				Notification.requestPermission().then(function (permission) {
+					if (permission === "granted") {
+						new Notification(message, { body: message });
+					}
+				});
+			} else {
+				let message = document.getElementById("message").value;
+				new Notification(message, { body: message });
+			}
+		}
+
+		function updateFavicon() {
+			var favicon = document.querySelector("#favicon");
+			
+			if (counter < 0) {
+				if (counter % 2) {
+					favicon.href = "images/timerfavicon1.png";
+				} else {
+					favicon.href = "images/timerfavicon2.png";
+				}
+			} else {
+				favicon.href = "images/timerfavicon1.png";
+			}
+		}
+
+		function updateCounter() {
+			const seconds_per_hour = 60 * 60;
+			const seconds_per_minute = 60;
+			
+			let negative = counter < 0;
+			let currentCounter = negative ? -counter : counter;
+			
+			let hours = parseInt(currentCounter / seconds_per_hour);
+			let minutes = parseInt((currentCounter % seconds_per_hour) / seconds_per_minute);
+			let seconds = parseInt((currentCounter - seconds_per_hour * hours - minutes * seconds_per_minute) % seconds_per_minute);
+
+			if (hours > 0 && hours < 10) {
+				hours = "0" + hours;
+			}
+			
+			if (minutes < 10) {
+				minutes = "0" + minutes;
+			}
+						
+			if (seconds < 10) {
+				seconds = "0" + seconds;
+			}
+			
+			let sign = negative ? "-" : "";
+			let fullTime = sign;
+			
+			if (hours > 0) {
+				fullTime += hours + ":";
+			}
+			
+			fullTime += minutes + ":" + seconds;
+			
+			document.getElementById("countdown").innerHTML = fullTime;
+			
+			updateFavicon();
+		}
+
+		function iteration() {
+			if (state == "stopped" || state == "paused") {
+				return;
+			}
+			
+			counter--;
+			updateCounter();
+			
+			if (counter == 0) {
+				showTimeoutNotification();
+			}
+		}
+	
+		function run() {
+			if (state == "running") {
+				document.getElementById("startButton").innerHTML = "Continue";
+				pause();
+				return;
+			}
+			
+			if (typeof timer != "undefined") {
+				clearInterval(timer);
+			}
+			
+			if (state != "paused") {
+				counter = parseInt(document.getElementById("totalTime").value * 60);
+			}
+			
+			state = "running"
+			document.getElementById("startButton").innerHTML = "Pause";
+			timer = setInterval(iteration, 1000);
+			updateCounter();
+		}
+		
+		function pause() {
+			state = "paused"
+		}
+		
+		function resume() {
+			state = "running"
+		}
+		
+		function reset() {
+			pause();
+			document.getElementById("startButton").innerHTML = "Start";
+			counter = parseInt(document.getElementById("totalTime").value * 60);
+			updateCounter();
+		}
+	</script>
+
+	<style>
+		body {
+			font-family: sans-serif;
+			background: url(images/robin-bg.jpg) no-repeat center center fixed;
+			background-size: cover;
+			background-color: #000;
+			padding-left: 20px;
+		}
+		
+		button {
+			margin-right: 10px;
+			color: #fff;
+			background-color: #000;
+			border: none;
+			width: 100px;
+			padding: 10px 10px 10px 10px;
+		}
+		
+		input {
+			padding-left: 5px;	
+		}
+		
+		#countdown {
+			font-size: 52px;
+			color: #fff;
+		}
+		
+		.settings {
+			color: #fff;
+			width: 350px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="countdown" style="font-size: 72pt">30:00</div>
+	
+	<div class="settings">
+		Time: <input type="number" id="totalTime" value="30" style="width: 50px;" oninput="updateTotalCounter()"> minutes<br><br>
+		Message: <input type="text" id="message" value="Time is up."><br><br>
+		<button onclick="run()" id="startButton">Start</button>
+		<button onclick="reset()">Reset</button><br>
+		
+		<p>This is a silent countdown timer. It will display a notification when the time is up but it will not annoy your coworkers by making a sound.</p>
+	</div>
+
+</body>
+</html>
