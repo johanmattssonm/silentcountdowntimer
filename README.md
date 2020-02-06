@@ -7,5 +7,8 @@ will get a desktop notification when the alarm goes off instead of a beep.
 You can find the timer here: <https://birdfont.org/timer.html>
 
 License: CC0
+
 Author: Johan Mattsson
+
 Photo: Andy Bear Grills Barker 
+
